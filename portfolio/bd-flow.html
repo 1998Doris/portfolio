@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能点餐 · BD流程手册</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --teal: #028090;
+    --seafoam: #00A896;
+    --mint: #02C39A;
+    --dark: #1A1A1A;
+    --gray: #64748B;
+    --light: #F0F7F8;
+    --white: #FFFFFF;
+    --amber: #F59E0B;
+    --rose: #F43F5E;
+    --violet: #8B5CF6;
+    --max-w: 960px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--light);
+    color: var(--dark);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ===== Header ===== */
+  .header {
+    background: linear-gradient(135deg, var(--teal), #065A82);
+    color: var(--white);
+    padding: 48px 0 40px;
+    text-align: center;
+  }
+
+  .header .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    border-radius: 20px;
+    padding: 5px 18px;
+    font-size: 0.8rem;
+    margin-bottom: 16px;
+    letter-spacing: 0.06em;
+  }
+
+  .header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+  }
+
+  .header p {
+    font-size: 0.95rem;
+    opacity: 0.75;
+  }
+
+  /* ===== Flow Pipeline ===== */
+  .pipeline {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    gap: 0;
+    margin: 0 auto;
+    max-width: 900px;
+    padding: 32px 0;
+  }
+
+  .pipe-step {
+    flex: 1;
+    text-align: center;
+    position: relative;
+    padding: 0 4px;
+  }
+
+  .pipe-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 28px;
+    right: -2px;
+    width: 4px;
+    height: 4px;
+    border-top: 2px solid var(--seafoam);
+    border-right: 2px solid var(--seafoam);
+    transform: rotate(45deg);
+    z-index: 2;
+  }
+
+  .pipe-num {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--white);
+    margin: 0 auto 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+
+  .pipe-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 2px;
+  }
+
+  .pipe-sub {
+    font-size: 0.75rem;
+    color: var(--gray);
+  }
+
+  .pipe-1 .pipe-num { background: var(--teal); }
+  .pipe-2 .pipe-num { background: var(--seafoam); }
+  .pipe-3 .pipe-num { background: var(--mint); }
+  .pipe-4 .pipe-num { background: var(--amber); }
+  .pipe-5 .pipe-num { background: var(--violet); }
+
+  /* ===== Section ===== */
+  .section {
+    padding: 40px 0;
+    border-bottom: 1px solid #DDE8EA;
+  }
+  .section:last-child { border-bottom: none; }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 6px;
+  }
+
+  .section-num {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--white);
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--dark);
+  }
+
+  .section-desc {
+    color: var(--gray);
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    margin-left: 54px;
+  }
+
+  /* ===== Tier Cards ===== */
+  .tier-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .tier-card {
+    border-radius: 14px;
+    padding: 20px;
+    color: var(--white);
+  }
+
+  .tier-card .tier-type {
+    font-size: 0.7rem;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+
+  .tier-card .tier-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .tier-card .tier-tag {
+    font-size: 0.8rem;
+    opacity: 0.85;
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+
+  .tier-card .tier-action {
+    background: rgba(255,255,255,0.2);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .tier-a { background: var(--teal); }
+  .tier-b { background: var(--seafoam); }
+  .tier-c { background: var(--mint); }
+  .tier-d { background: var(--amber); }
+
+  /* ===== Flow Steps ===== */
+  .flow-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .flow-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: var(--white);
+    border-radius: 12px;
+    padding: 18px 20px;
+    border: 1px solid #DDE8EA;
+  }
+
+  .flow-num {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--seafoam);
+    color: var(--white);
+    font-size: 0.9rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .flow-content { flex: 1; }
+
+  .flow-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 3px;
+  }
+
+  .flow-detail {
+    font-size: 0.85rem;
+    color: var(--gray);
+    line-height: 1.6;
+  }
+
+  /* ===== Copy Rules ===== */
+  .copy-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .copy-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 18px;
+    border: 1px solid #DDE8EA;
+    text-align: center;
+  }
+
+  .copy-card .copy-icon {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+  }
+
+  .copy-card .copy-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 4px;
+  }
+
+  .copy-card .copy-desc {
+    font-size: 0.8rem;
+    color: var(--gray);
+    line-height: 1.5;
+  }
+
+  /* ===== Value Grid ===== */
+  .value-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .value-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 18px 20px;
+    border: 1px solid #DDE8EA;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .value-icon {
+    font-size: 1.4rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .value-text h4 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 3px;
+  }
+
+  .value-text p {
+    font-size: 0.85rem;
+    color: var(--gray);
+    line-height: 1.5;
+  }
+
+  /* ===== Red Alert ===== */
+  .red-alert {
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .red-alert .alert-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .red-alert .alert-text {
+    font-size: 0.9rem;
+    color: #991B1B;
+    line-height: 1.6;
+  }
+
+  .red-alert .alert-text strong {
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  /* ===== Monthly Checklist ===== */
+  .monthly-list {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 20px;
+    border: 1px solid #DDE8EA;
+  }
+
+  .monthly-list h4 {
+    font-size: 1rem;
+    color: var(--teal);
+    margin-bottom: 14px;
+    font-weight: 700;
+  }
+
+  .monthly-list ul {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .monthly-list ul li {
+    font-size: 0.85rem;
+    color: var(--gray);
+    padding: 6px 0;
+    border-bottom: 1px solid #F5F5F5;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .monthly-list ul li::before {
+    content: '☐';
+    color: var(--seafoam);
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 768px) {
+    .pipeline { flex-wrap: wrap; gap: 8px; }
+    .pipe-step { flex: 0 0 48%; }
+    .pipe-step:not(:last-child)::after { display: none; }
+    .tier-grid { grid-template-columns: 1fr; }
+    .copy-grid { grid-template-columns: 1fr; }
+    .value-grid { grid-template-columns: 1fr; }
+    .monthly-list ul { grid-template-columns: 1fr; }
+    .section-desc { margin-left: 0; }
+    .header h1 { font-size: 1.4rem; }
+  }
+
+  /* ===== Back link ===== */
+  .back-link {
+    display: inline-block;
+    margin: 20px 24px;
+    color: var(--seafoam);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .back-link:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<a href="index.html" class="back-link">← 返回作品集</a>
+
+<!-- Header -->
+<div class="header">
+  <div class="container">
+    <div class="badge">BD 流程手册</div>
+    <h1>智能点餐 · 连锁品牌运营 BD 流程</h1>
+    <p>从选店到闭环，一套可复制的打单方法论</p>
+  </div>
+</div>
+
+<!-- Pipeline -->
+<div class="container">
+  <div class="pipeline">
+    <div class="pipe-step pipe-1">
+      <div class="pipe-num">1</div>
+      <div class="pipe-label">选店 · 分层</div>
+      <div class="pipe-sub">精准筛选目标</div>
+    </div>
+    <div class="pipe-step pipe-2">
+      <div class="pipe-num">2</div>
+      <div class="pipe-label">共识 · 开通</div>
+      <div class="pipe-sub">需求匹配方案</div>
+    </div>
+    <div class="pipe-step pipe-3">
+      <div class="pipe-num">3</div>
+      <div class="pipe-label">陪跑 · 试点</div>
+      <div class="pipe-sub">跑通数据模型</div>
+    </div>
+    <div class="pipe-step pipe-4">
+      <div class="pipe-num">4</div>
+      <div class="pipe-label">复制 · 拓容</div>
+      <div class="pipe-sub">同城全量复制</div>
+    </div>
+    <div class="pipe-step pipe-5">
+      <div class="pipe-num">5</div>
+      <div class="pipe-label">闭环 · 价值</div>
+      <div class="pipe-sub">深度绑定留存</div>
+    </div>
+  </div>
+</div>
+
+<!-- 1. 选店·分层 -->
+<div class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-num" style="background: var(--teal);">1</div>
+      <div class="section-title">选店 · 分层</div>
+    </div>
+    <p class="section-desc">按门店规模和运营模式分层，匹配不同的拓店策略</p>
+
+    <div class="tier-grid">
+      <div class="tier-card tier-a">
+        <div class="tier-type">优先突破</div>
+        <div class="tier-name">收银 + 同城直营</div>
+        <div class="tier-tag">门店集中、决策链短、复制成本低</div>
+        <div class="tier-action">一次拜访打包锁定 → 当天开通标杆 → 3天出数据 → 当月全量复制</div>
+      </div>
+      <div class="tier-card tier-b">
+        <div class="tier-type">规模激活</div>
+        <div class="tier-name">收银 + 跨城联营 / 加盟</div>
+        <div class="tier-tag">分散决策、授权链路长、需要逐个攻破</div>
+        <div class="tier-action">本地跑通1家出数据包 → 收集授权 → 统一线上培训 → 复制</div>
+      </div>
+      <div class="tier-card tier-c">
+        <div class="tier-type">试点切入</div>
+        <div class="tier-name">同城直营 · 收银不适配</div>
+        <div class="tier-tag">配合度高但现有收银系统不兼容</div>
+        <div class="tier-action">试点双系统并行 → 或新店试点新收银机 → 跑通后推广</div>
+      </div>
+      <div class="tier-card tier-d">
+        <div class="tier-type">机会切入</div>
+        <div class="tier-name">同城联营 &amp; 加盟品牌</div>
+        <div class="tier-tag">新店开业是切入新产品的最佳窗口</div>
+        <div class="tier-action">用新店机会点切入 → 试新产品 → 跑通数据后复制到老店</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. 共识·开通 -->
+<div class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-num" style="background: var(--seafoam);">2</div>
+      <div class="section-title">共识 · 开通</div>
+    </div>
+    <p class="section-desc">三步建立共识，用案例说话，用方案落地</p>
+
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-content">
+          <div class="flow-title">商户需求识别及诊断洞察</div>
+          <div class="flow-detail">了解品牌当前痛点：到店转化低？会员复购差？数据不通？先诊断再开方。</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-content">
+          <div class="flow-title">产品价值匹配</div>
+          <div class="flow-detail">把产品功能翻译成客户听得懂的价值：不是"我们有AI服务员"，而是"帮你省1个前厅人力"。</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-content">
+          <div class="flow-title">解决方案针对性梳理制定（匹配案例）</div>
+          <div class="flow-detail">给同品类标杆案例数据，用"别人已经跑通了"降低决策风险，输出定制化方案。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. 陪跑·试点 -->
+<div class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-num" style="background: var(--mint);">3</div>
+      <div class="section-title">陪跑 · 试点</div>
+    </div>
+    <p class="section-desc">到店五步跑通系统，盯紧数据一周一个台阶</p>
+
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-content">
+          <div class="flow-title">到店五步把系统跑通</div>
+          <div class="flow-detail">到店沟通 → 系统配置 → 物料铺设 → 店员培训 → 首日上线陪跑，确保第一家店顺利跑通。</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-content">
+          <div class="flow-title">根据门店数量选打法</div>
+          <div class="flow-detail">1-5家：深度陪跑；5-20家：集中培训+标杆复制；20家+：分级运营+自动化工具体系。</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-content">
+          <div class="flow-title">盯紧数据，一周一个台阶往上走</div>
+          <div class="flow-detail">每日追踪扫码率、活跃用户、GTV，周度复盘，数据不达标立刻介入，不等到月底。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. 复制·拓容 -->
+<div class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-num" style="background: var(--amber);">4</div>
+      <div class="section-title">复制 · 拓容</div>
+    </div>
+    <p class="section-desc">跑通一家，复制一片。不同场景用不同节奏</p>
+
+    <div class="copy-grid">
+      <div class="copy-card">
+        <div class="copy-icon">🏙️</div>
+        <div class="copy-title">同城全量复制</div>
+        <div class="copy-desc">自己全流程搞定，不用等人。标杆店数据说话，其他门店跟进阻力小。</div>
+      </div>
+      <div class="copy-card">
+        <div class="copy-icon">🤝</div>
+        <div class="copy-title">借力上级</div>
+        <div class="copy-desc">拉上级和老板牵头，BD配合执行。搞定关键决策人，降低沟通成本。</div>
+      </div>
+      <div class="copy-card">
+        <div class="copy-icon">🔧</div>
+        <div class="copy-title">驻店攻坚</div>
+        <div class="copy-desc">搞不定时驻店3天没起色 → 喊上级到店一起诊断，不放弃任何一个标杆。</div>
+      </div>
+    </div>
+
+    <div class="red-alert">
+      <div class="alert-icon">📌</div>
+      <div class="alert-text">
+        <strong>日常机制铁三角</strong>
+        每周看 GTV 黑榜 → 每月品牌复盘 → 群里答疑刷存在感<br>
+        <span style="font-size:0.82rem; opacity:0.8;">三个动作缺一不可，保持客户活跃度和信任感。</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. 闭环·价值 -->
+<div class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-num" style="background: var(--violet);">5</div>
+      <div class="section-title">闭环 · 价值</div>
+    </div>
+    <p class="section-desc">验证解决方案价值，让客户离不开</p>
+
+    <div class="value-grid">
+      <div class="value-card">
+        <div class="value-icon">⚡</div>
+        <div class="value-text">
+          <h4>效率</h4>
+          <p>自动核销团购券、匹配补贴，减少人工对账，提升门店运营效率。</p>
+        </div>
+      </div>
+      <div class="value-card">
+        <div class="value-icon">🤖</div>
+        <div class="value-text">
+          <h4>AI</h4>
+          <p>门店专属 AI 服务员、自动推荐菜品，7×24 小时在线响应顾客需求。</p>
+        </div>
+      </div>
+      <div class="value-card">
+        <div class="value-icon">📢</div>
+        <div class="value-text">
+          <h4>流量</h4>
+          <p>所有订单计入线上销量，榜单流量双提升，自然获客能力增强。</p>
+        </div>
+      </div>
+      <div class="value-card">
+        <div class="value-icon">👁️</div>
+        <div class="value-text">
+          <h4>曝光</h4>
+          <p>一键自动收藏打卡，赠菜自动同步后厨，提升到店转化和口碑传播。</p>
+        </div>
+      </div>
+      <div class="value-card">
+        <div class="value-icon">🎯</div>
+        <div class="value-text">
+          <h4>营销</h4>
+          <p>联合会员打通，菜品券精准触达，老客召回 + 潜客引流，提升复购。</p>
+        </div>
+      </div>
+      <div class="value-card">
+        <div class="value-icon">🔄</div>
+        <div class="value-text">
+          <h4>留存</h4>
+          <p>数据健康度持续正向，客户续约率高，从"试点"变成"长期合作"。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="monthly-list">
+      <h4>📌 月度必做清单</h4>
+      <ul>
+        <li>全品牌健康度评分更新</li>
+        <li>流失客户分析 & 召回方案</li>
+        <li>腰部品牌升级方案提案</li>
+        <li>头部品牌联合营销规划</li>
+        <li>标杆案例包装与传播</li>
+        <li>团队经验沉淀与分享</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

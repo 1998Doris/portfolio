@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能点餐 · BD作战手册</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --teal: #028090;
+    --seafoam: #00A896;
+    --mint: #02C39A;
+    --dark: #1A1A1A;
+    --gray: #64748B;
+    --light: #F0F7F8;
+    --white: #FFFFFF;
+    --amber: #F59E0B;
+    --max-w: 960px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--light);
+    color: var(--dark);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ===== Header ===== */
+  .header {
+    background: linear-gradient(135deg, var(--teal), #065A82);
+    color: var(--white);
+    padding: 60px 0 48px;
+    text-align: center;
+  }
+
+  .header .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    border-radius: 20px;
+    padding: 6px 20px;
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+    letter-spacing: 0.05em;
+  }
+
+  .header h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    letter-spacing: -0.02em;
+  }
+
+  .header p {
+    font-size: 1.05rem;
+    opacity: 0.8;
+  }
+
+  /* ===== Section ===== */
+  .section {
+    padding: 48px 0;
+    border-bottom: 1px solid #DDE8EA;
+  }
+
+  .section:last-child { border-bottom: none; }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+
+  .section-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--teal);
+  }
+
+  .section-desc {
+    color: var(--gray);
+    font-size: 0.95rem;
+    margin-bottom: 28px;
+    margin-left: 64px;
+  }
+
+  /* ===== Tier Cards ===== */
+  .tier-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 28px;
+  }
+
+  .tier-card {
+    border-radius: 16px;
+    padding: 24px 20px;
+    color: var(--white);
+    position: relative;
+  }
+
+  .tier-card .tier-label {
+    font-size: 0.75rem;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+
+  .tier-card .tier-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .tier-card .tier-tag {
+    font-size: 0.8rem;
+    opacity: 0.85;
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+
+  .tier-card .tier-action {
+    background: rgba(255,255,255,0.2);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .tier-head { background: var(--teal); }
+  .tier-mid { background: var(--seafoam); }
+  .tier-tail { background: var(--mint); }
+
+  /* ===== Process Steps ===== */
+  .process-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    background: var(--white);
+    border-radius: 14px;
+    padding: 20px 24px;
+    border: 1px solid #DDE8EA;
+  }
+
+  .step-num {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--seafoam);
+    color: var(--white);
+    font-size: 1rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .step-content { flex: 1; }
+
+  .step-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 4px;
+  }
+
+  .step-detail {
+    font-size: 0.9rem;
+    color: var(--gray);
+    line-height: 1.6;
+  }
+
+  /* ===== Timeline ===== */
+  .onboarding-timeline {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    margin-bottom: 28px;
+    padding: 0 10px;
+  }
+
+  .onboarding-timeline::before {
+    content: '';
+    position: absolute;
+    top: 24px;
+    left: 30px;
+    right: 30px;
+    height: 3px;
+    background: linear-gradient(to right, var(--seafoam), var(--mint));
+    border-radius: 2px;
+  }
+
+  .ob-step {
+    text-align: center;
+    flex: 1;
+    position: relative;
+    z-index: 1;
+  }
+
+  .ob-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--teal);
+    border: 4px solid var(--white);
+    box-shadow: 0 0 0 3px var(--seafoam);
+    margin: 14px auto 10px;
+  }
+
+  .ob-day {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--seafoam);
+  }
+
+  .ob-task {
+    font-size: 0.8rem;
+    color: var(--gray);
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+
+  /* ===== 2-col Grid ===== */
+  .col2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 28px;
+  }
+
+  .info-card {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 24px;
+    border: 1px solid #DDE8EA;
+  }
+
+  .info-card h4 {
+    font-size: 1rem;
+    color: var(--teal);
+    margin-bottom: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .info-card ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .info-card ul li {
+    font-size: 0.9rem;
+    color: var(--gray);
+    padding: 6px 0;
+    border-bottom: 1px solid #F0F0F0;
+    line-height: 1.5;
+  }
+
+  .info-card ul li:last-child { border-bottom: none; }
+
+  .info-card ul li::before {
+    content: '→ ';
+    color: var(--seafoam);
+    font-weight: 600;
+  }
+
+  /* ===== Checklist ===== */
+  .checklist {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 24px;
+    border: 1px solid #DDE8EA;
+    margin-bottom: 28px;
+  }
+
+  .checklist h4 {
+    font-size: 1rem;
+    color: var(--teal);
+    margin-bottom: 16px;
+    font-weight: 700;
+  }
+
+  .check-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: var(--gray);
+  }
+
+  .check-box {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    border: 2px solid var(--seafoam);
+    flex-shrink: 0;
+  }
+
+  /* ===== Metric Bar ===== */
+  .metric-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--white);
+    border-radius: 14px;
+    padding: 20px 24px;
+    border: 1px solid #DDE8EA;
+    margin-bottom: 16px;
+  }
+
+  .metric-bar .metric-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+  }
+
+  .metric-bar .metric-text {
+    flex: 1;
+  }
+
+  .metric-bar .metric-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--dark);
+  }
+
+  .metric-bar .metric-sub {
+    font-size: 0.85rem;
+    color: var(--gray);
+  }
+
+  .metric-bar .metric-action {
+    background: var(--seafoam);
+    color: var(--white);
+    border-radius: 8px;
+    padding: 6px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 768px) {
+    .tier-grid { grid-template-columns: 1fr; }
+    .col2 { grid-template-columns: 1fr; }
+    .check-grid { grid-template-columns: 1fr; }
+    .section-desc { margin-left: 0; }
+    .onboarding-timeline { flex-wrap: wrap; gap: 0; }
+    .ob-step { flex: 0 0 50%; margin-bottom: 8px; }
+    .header h1 { font-size: 1.6rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="container">
+    <div class="badge">BD 版 · 内部资料</div>
+    <h1>智能点餐 · 连锁品牌运营作战手册</h1>
+    <p>从获客到留存，一套可复制的 BD 操盘指南</p>
+  </div>
+</div>
+
+<!-- 1. 获客 -->
+<div class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-icon" style="background: #FFF3E0;">🎯</div>
+      <div class="section-title">获客 — 品牌分层与精准打法</div>
+    </div>
+    <p class="section-desc">按品牌体量分级，不同策略，精准击破</p>
+
+    <div class="tier-grid">
+      <div class="tier-card tier-head">
+        <div class="tier-label">重点突破</div>
+        <div class="tier-name">头部品牌</div>
+        <div class="tier-tag">≥100家门店<br>标准化程度高</div>
+        <div class="tier-action">前置沟通新店/新品首发</div>
+      </div>
+      <div class="tier-card tier-mid">
+        <div class="tier-label">规模激活</div>
+        <div class="tier-name">腰部品牌</div>
+        <div class="tier-tag">10~100家门店<br>增长意愿强</div>
+        <div class="tier-action">品牌诊断 + 对赌方案</div>
+      </div>
+      <div class="tier-card tier-tail">
+        <div class="tier-label">广覆盖</div>
+        <div class="tier-name">尾部品牌</div>
+        <div class="tier-tag">&lt;10家门店<br>单店决策快</div>
+        <div class="tier-action">效果广告 + 转型建议</div>
+      </div>
+    </div>
+
+    <div class="checklist">
+      <h4>📌 首访必查清单</h4>
+      <div class="check-grid">
+        <div class="check-item"><div class="check-box"></div> 品牌当前门店数 + 拓店计划</div>
+        <div class="check-item"><div class="check-box"></div> 现有数字化工具及痛点</div>
+        <div class="check-item"><div class="check-box"></div> 决策人：老板/运营/技术谁拍板</div>
+        <div class="check-item"><div class="check-box"></div> 竞品使用情况</div>
+        <div class="check-item"><div class="check-box"></div> 新品/新店上线节奏</div>
+        <div class="check-item"><div class="check-box"></div> 营销预算范围</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. 开单 -->
+<div class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-icon" style="background: #FEF3C7;">🤝</div>
+      <div class="section-title">开单 — 建立共识与方案匹配</div>
+    </div>
+    <p class="section-desc">找准决策人，用他的语言讲价值</p>
+
+    <div class="col2">
+      <div class="info-card">
+        <h4>👔 老板/创始人</h4>
+        <ul>
+          <li>谈降本增效，讲ROI和行业对标</li>
+          <li>给标杆案例（同品类品牌数据）</li>
+          <li>突出拓店效率和会员复购提升</li>
+        </ul>
+      </div>
+      <div class="info-card">
+        <h4>👨‍🍳 运营/厨师长</h4>
+        <ul>
+          <li>谈出餐效率和后厨管理</li>
+          <li>用同商圈竞品数据说话</li>
+          <li>强调日度数据看板和异常预警</li>
+        </ul>
+      </div>
+      <div class="info-card">
+        <h4>🛒 采购/买手</h4>
+        <ul>
+          <li>谈供应链协同和库存管理</li>
+          <li>数据驱动的采购建议</li>
+          <li>减少损耗，优化周转</li>
+        </ul>
+      </div>
+      <div class="info-card">
+        <h4>📱 市场/数字化负责人</h4>
+        <ul>
+          <li>谈私域沉淀和会员画像</li>
+          <li>API对接和数据打通方案</li>
+          <li>多系统兼容性和IT投入</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. 抱盘 -->
+<div class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-icon" style="background: #DCFCE7;">🚀</div>
+      <div class="section-title">抱盘 — 标准化 onboarding 流程</div>
+    </div>
+    <p class="section-desc">签约不是结束，是开始。前30天决定续约</p>
+
+    <div class="onboarding-timeline">
+      <div class="ob-step">
+        <div class="ob-day">签约当天</div>
+        <div class="ob-dot"></div>
+        <div class="ob-task">确认上线排期<br>拉项目群</div>
+      </div>
+      <div class="ob-step">
+        <div class="ob-day">第3天</div>
+        <div class="ob-dot"></div>
+        <div class="ob-task">系统配置完成<br>培训操作</div>
+      </div>
+      <div class="ob-step">
+        <div class="ob-day">第7天</div>
+        <div class="ob-dot"></div>
+        <div class="ob-task">首次数据复盘<br>答疑优化</div>
+      </div>
+      <div class="ob-step">
+        <div class="ob-day">第20天</div>
+        <div class="ob-dot"></div>
+        <div class="ob-task">健康度诊断<br>识别风险</div>
+      </div>
+      <div class="ob-step">
+        <div class="ob-day">第30天</div>
+        <div class="ob-dot"></div>
+        <div class="ob-task">深度复盘<br>下月计划</div>
+      </div>
+    </div>
+
+    <div class="process-steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-title">上线前准备</div>
+          <div class="step-detail">确认门店信息、菜品数据导入、二维码物料设计、店员培训排期</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-title">上线首周攻坚</div>
+          <div class="step-detail">每日追踪扫码率，前厅后厨同步宣导，设置扫码激励（小菜/饮品）</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-title">数据复盘迭代</div>
+          <div class="step-detail">周度看数据看板，识别低分门店定向帮扶，沉淀优秀案例</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. 复购 -->
+<div class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-icon" style="background: #FEE2E2;">📈</div>
+      <div class="section-title">复购 — 客户健康度与增长规划</div>
+    </div>
+    <p class="section-desc">数据看得见，客户留得住</p>
+
+    <div class="metric-bar">
+      <div class="metric-icon">📊</div>
+      <div class="metric-text">
+        <div class="metric-title">健康度评分模型</div>
+        <div class="metric-sub">扫码率 · 活跃用户数 · 复购率 · 客单价变化 · GTV 完成率</div>
+      </div>
+      <div class="metric-action">每周更新</div>
+    </div>
+
+    <div class="metric-bar">
+      <div class="metric-icon">⚠️</div>
+      <div class="metric-text">
+        <div class="metric-title">流失预警红线</div>
+        <div class="metric-sub">连续7天扫码率 &lt; 5% · 连续2周全周扫码用户 &lt; 10人 · 客户超15天未登录后台</div>
+      </div>
+      <div metric-action">立即介入</div>
+    </div>
+
+    <div class="col2">
+      <div class="info-card">
+        <h4>🎁 促销活动 checklist</h4>
+        <ul>
+          <li>活动前：确认预算+排期+物料</li>
+          <li>活动中：实时追踪扫码转化</li>
+          <li>活动后：3天内出效果报告</li>
+          <li>KPI：ROAS ≥ 3 · 增量GTV达标</li>
+        </ul>
+      </div>
+      <div class="info-card">
+        <h4>📱 数据服务看板</h4>
+        <ul>
+          <li>日/周/月扫码数据报表</li>
+          <li>用户画像与消费偏好</li>
+          <li>新老用户占比与留存曲线</li>
+          <li>异常门店自动预警</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. 口碑 -->
+<div class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-icon" style="background: #EDE9FE;">⭐</div>
+      <div class="section-title">口碑 — 评价管理与品牌价值</div>
+    </div>
+    <p class="section-desc">好口碑是最好的获客</p>
+
+    <div class="col2">
+      <div class="info-card">
+        <h4>📋 评价管理 SOP</h4>
+        <ul>
+          <li>每日巡检：差评2小时内响应</li>
+          <li>引导好评：扫码后弹窗邀请评价</li>
+          <li>定期复盘：周度评价分析报告</li>
+          <li>加分项：晒图/追评额外激励</li>
+        </ul>
+      </div>
+      <div class="info-card">
+        <h4>🏆 标杆案例打造</h4>
+        <ul>
+          <li>选取TOP门店做深度访谈</li>
+          <li>提炼可复制的运营方法论</li>
+          <li>制作案例包用于新客户破冰</li>
+          <li>季度评选"最佳合作伙伴"</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="checklist">
+      <h4>📌 月度必做</h4>
+      <div class="check-grid">
+        <div class="check-item"><div class="check-box"></div> 全品牌健康度评分更新</div>
+        <div class="check-item"><div class="check-box"></div> 流失客户分析 & 召回方案</div>
+        <div class="check-item"><div class="check-box"></div> 腰部品牌升级方案提案</div>
+        <div class="check-item"><div class="check-box"></div> 头部品牌联合营销规划</div>
+        <div class="check-item"><div class="check-box"></div> 标杆案例包装与传播</div>
+        <div class="check-item"><div class="check-box"></div> 团队经验沉淀与分享</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
