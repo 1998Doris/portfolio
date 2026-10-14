@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="160" viewBox="0 0 960 160">
+<rect width="960" height="160" fill="#FAFCFD"/>
+<text x="480" y="22" text-anchor="middle" font-size="13" font-weight="bold" fill="#1a1a1a">餐饮大客户管理核心框架</text>
+<rect x="51.666666666666664" y="40" width="130" height="80" rx="10" ry="10" fill="#2A9D8F" stroke="#fff" stroke-width="2"/>
+<text x="116.66666666666666" y="72" text-anchor="middle" font-size="13" font-weight="bold" fill="#fff">客户</text>
+<text x="116.66666666666666" y="90" text-anchor="middle" font-size="13" font-weight="bold" fill="#fff">筛选</text>
+<text x="185.66666666666666" y="85" font-size="20" fill="#666">&#10132;</text>
+<rect x="233.33333333333331" y="40" width="130" height="80" rx="10" ry="10" fill="#E9C46A" stroke="#fff" stroke-width="2"/>
+<text x="298.3333333333333" y="72" text-anchor="middle" font-size="13" font-weight="bold" fill="#fff">客户</text>
+<text x="298.3333333333333" y="90" text-anchor="middle" font-size="13" font-weight="bold" fill="#fff">分析</text>
+<text x="367.3333333333333" y="85" font-size="20" fill="#666">&#10132;</text>
+<rect x="415.0" y="40" width="130" height="80" rx="10" ry="10" fill="#F4A261" stroke="#fff" stroke-width="2"/>
+<text x="480.0" y="72" text-anchor="middle" font-size="13" font-weight="bold" fill="#fff">关系建立</text>
+<text x="480.0" y="90" text-anchor="middle" font-size="13" font-weight="bold" fill="#fff">与维护</text>
+<text x="549.0" y="85" font-size="20" fill="#666">&#10132;</text>
+<rect x="596.6666666666666" y="40" width="130" height="80" rx="10" ry="10" fill="#E63946" stroke="#fff" stroke-width="2"/>
+<text x="661.6666666666666" y="72" text-anchor="middle" font-size="13" font-weight="bold" fill="#fff">价值</text>
+<text x="661.6666666666666" y="90" text-anchor="middle" font-size="13" font-weight="bold" fill="#fff">传递</text>
+<text x="730.6666666666666" y="85" font-size="20" fill="#666">&#10132;</text>
+<rect x="778.3333333333333" y="40" width="130" height="80" rx="10" ry="10" fill="#264653" stroke="#fff" stroke-width="2"/>
+<text x="843.3333333333333" y="72" text-anchor="middle" font-size="13" font-weight="bold" fill="#fff">风险</text>
+<text x="843.3333333333333" y="90" text-anchor="middle" font-size="13" font-weight="bold" fill="#fff">管控</text>
+</svg>

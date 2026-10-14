@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能点餐 · BD流程手册</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --teal: #028090;
+    --seafoam: #00A896;
+    --mint: #02C39A;
+    --amber: #F59E0B;
+    --violet: #8B5CF6;
+    --dark: #1A1A1A;
+    --gray: #64748B;
+    --light: #F0F7F8;
+    --white: #FFFFFF;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--light);
+    color: var(--dark);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: auto;
+  }
+
+  .back-link {
+    display: inline-block;
+    margin: 16px 24px;
+    color: var(--seafoam);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  /* ===== Header ===== */
+  .header {
+    background: linear-gradient(135deg, var(--teal), #065A82);
+    color: var(--white);
+    padding: 28px 24px 24px;
+    text-align: center;
+  }
+  .header .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 0.75rem;
+    margin-bottom: 10px;
+  }
+  .header h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; }
+  .header p { font-size: 0.85rem; opacity: 0.75; }
+
+  /* ===== Horizontal Pipeline ===== */
+  .pipeline {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0;
+    height: calc(100vh - 140px);
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .step-col {
+    flex: 0 0 220px;
+    min-width: 220px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #DDE8EA;
+    position: relative;
+  }
+  .step-col:last-child { border-right: none; }
+
+  /* Step header */
+  .step-header {
+    padding: 20px 16px 14px;
+    text-align: center;
+    border-bottom: 1px solid #DDE8EA;
+  }
+  .step-num {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--white);
+    margin: 0 auto 8px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+  }
+  .step-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--dark);
+  }
+  .step-sub {
+    font-size: 0.75rem;
+    color: var(--gray);
+    margin-top: 2px;
+  }
+
+  /* Step body */
+  .step-body {
+    flex: 1;
+    padding: 14px 16px;
+    overflow-y: auto;
+  }
+
+  /* Tier mini cards */
+  .tier-mini {
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    color: var(--white);
+  }
+  .tier-mini .tm-name {
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .tier-mini .tm-action {
+    font-size: 0.72rem;
+    opacity: 0.9;
+    line-height: 1.4;
+  }
+  .tier-a { background: var(--teal); }
+  .tier-b { background: var(--seafoam); }
+  .tier-c { background: var(--mint); }
+  .tier-d { background: var(--amber); color: var(--dark); }
+
+  .section-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 12px 0 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #DDE8EA;
+  }
+
+  /* Flow items */
+  .flow-item {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+    align-items: flex-start;
+  }
+  .flow-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--seafoam);
+    color: var(--white);
+    font-size: 0.7rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .flow-item-text {
+    font-size: 0.78rem;
+    color: var(--dark);
+    line-height: 1.5;
+  }
+  .flow-item-text strong {
+    display: block;
+    font-size: 0.8rem;
+    margin-bottom: 1px;
+  }
+
+  /* Value items */
+  .value-item {
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+    margin-bottom: 6px;
+    font-size: 0.78rem;
+    color: var(--dark);
+    line-height: 1.4;
+  }
+  .value-item .vi-icon { font-size: 0.9rem; flex-shrink: 0; margin-top: 1px; }
+  .value-item strong { font-size: 0.8rem; }
+
+  /* Alert box */
+  .alert-box {
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.75rem;
+    color: #991B1B;
+    line-height: 1.5;
+    margin-top: 8px;
+  }
+  .alert-box strong { display: block; margin-bottom: 2px; }
+
+  /* Checklist */
+  .checklist {
+    list-style: none;
+    font-size: 0.75rem;
+    color: var(--gray);
+  }
+  .checklist li {
+    padding: 3px 0;
+    border-bottom: 1px solid #F5F5F5;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .checklist li::before {
+    content: '☐';
+    color: var(--seafoam);
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  /* Arrow between steps */
+  .step-arrow {
+    position: absolute;
+    top: 50%;
+    right: -6px;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 12px;
+    border-top: 2px solid var(--seafoam);
+    border-right: 2px solid var(--seafoam);
+    transform: translateY(-50%) rotate(45deg);
+    z-index: 2;
+    background: var(--light);
+  }
+
+  @media (max-width: 768px) {
+    .pipeline { flex-wrap: wrap; }
+    .step-col { flex: 0 0 45%; min-width: 45%; border-bottom: 1px solid #DDE8EA; }
+  }
+</style>
+</head>
+<body>
+
+<a href="index.html" class="back-link">← 返回作品集</a>
+
+<div class="header">
+  <div class="badge">BD 流程手册</div>
+  <h1>智能点餐 · 连锁品牌运营 BD 流程</h1>
+  <p>从选店到闭环，一套可复制的打单方法论</p>
+</div>
+
+<div class="pipeline">
+
+  <!-- Step 1: 选店·分层 -->
+  <div class="step-col">
+    <div class="step-arrow"></div>
+    <div class="step-header">
+      <div class="step-num" style="background: var(--teal);">1</div>
+      <div class="step-title">选店 · 分层</div>
+      <div class="step-sub">精准筛选目标</div>
+    </div>
+    <div class="step-body">
+      <div class="section-label">门店分层</div>
+      <div class="tier-mini tier-a">
+        <div class="tm-name">收银 + 同城直营</div>
+        <div class="tm-action">决策链短，一次拜访打包 → 当天开通标杆 → 3天出数据 → 当月全量复制</div>
+      </div>
+      <div class="tier-mini tier-b">
+        <div class="tm-name">收银 + 跨城联营/加盟</div>
+        <div class="tm-action">本地跑通1家出数据包 → 收集授权 → 统一线上培训 → 复制</div>
+      </div>
+      <div class="tier-mini tier-c">
+        <div class="tm-name">同城直营 · 收银不适配</div>
+        <div class="tm-action">试点双系统并行 → 新店试点新收银机 → 跑通后推广</div>
+      </div>
+      <div class="tier-mini tier-d">
+        <div class="tm-name">同城联营 &amp; 加盟品牌</div>
+        <div class="tm-action">新店机会切入 → 试新产品 → 跑通数据后复制到老店</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: 共识·开通 -->
+  <div class="step-col">
+    <div class="step-arrow"></div>
+    <div class="step-header">
+      <div class="step-num" style="background: var(--seafoam);">2</div>
+      <div class="step-title">共识 · 开通</div>
+      <div class="step-sub">需求匹配方案</div>
+    </div>
+    <div class="step-body">
+      <div class="section-label">三步建立共识</div>
+      <div class="flow-item">
+        <div class="flow-dot">1</div>
+        <div class="flow-item-text">
+          <strong>商户需求识别及诊断洞察</strong>
+          了解品牌痛点：到店转化低？会员复购差？数据不通？先诊断再开方。
+        </div>
+      </div>
+      <div class="flow-item">
+        <div class="flow-dot">2</div>
+        <div class="flow-item-text">
+          <strong>产品价值匹配</strong>
+          把功能翻译成客户听得懂的价值：不是"AI服务员"，而是"帮你省1个前厅人力"。
+        </div>
+      </div>
+      <div class="flow-item">
+        <div class="flow-dot">3</div>
+        <div class="flow-item-text">
+          <strong>解决方案针对性制定</strong>
+          给同品类标杆案例数据，用"别人已经跑通了"降低决策风险。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3: 陪跑·试点 -->
+  <div class="step-col">
+    <div class="step-arrow"></div>
+    <div class="step-header">
+      <div class="step-num" style="background: var(--mint);">3</div>
+      <div class="step-title">陪跑 · 试点</div>
+      <div class="step-sub">跑通数据模型</div>
+    </div>
+    <div class="step-body">
+      <div class="section-label">到店五步跑通</div>
+      <div class="flow-item">
+        <div class="flow-dot">→</div>
+        <div class="flow-item-text">到店沟通 → 系统配置 → 物料铺设 → 店员培训 → 首日上线陪跑</div>
+      </div>
+      <div class="section-label">按规模选打法</div>
+      <div class="flow-item">
+        <div class="flow-dot">1</div>
+        <div class="flow-item-text"><strong>1-5家</strong> 深度陪跑</div>
+      </div>
+      <div class="flow-item">
+        <div class="flow-dot">2</div>
+        <div class="flow-item-text"><strong>5-20家</strong> 集中培训+标杆复制</div>
+      </div>
+      <div class="flow-item">
+        <div class="flow-dot">3</div>
+        <div class="flow-item-text"><strong>20家+</strong> 分级运营+自动化工具</div>
+      </div>
+      <div class="alert-box">
+        <strong>📌 盯紧数据</strong>
+        每日追踪扫码率、活跃用户、GTV，周度复盘，数据不达标立刻介入。
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 4: 复制·拓容 -->
+  <div class="step-col">
+    <div class="step-arrow"></div>
+    <div class="step-header">
+      <div class="step-num" style="background: var(--amber);">4</div>
+      <div class="step-title">复制 · 拓容</div>
+      <div class="step-sub">同城全量复制</div>
+    </div>
+    <div class="step-body">
+      <div class="section-label">复制策略</div>
+      <div class="value-item">
+        <span class="vi-icon">🏙️</span>
+        <div><strong>同城全量复制</strong>标杆店数据说话，其他门店跟进阻力小</div>
+      </div>
+      <div class="value-item">
+        <span class="vi-icon">🤝</span>
+        <div><strong>借力上级</strong>拉上级和老板牵头，BD配合执行</div>
+      </div>
+      <div class="value-item">
+        <span class="vi-icon">🔧</span>
+        <div><strong>驻店攻坚</strong>3天没起色喊上级到店一起诊断</div>
+      </div>
+      <div class="alert-box">
+        <strong>📌 日常铁三角</strong>
+        每周看GTV黑榜 → 每月品牌复盘 → 群里答疑刷存在感
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 5: 闭环·价值 -->
+  <div class="step-col">
+    <div class="step-header">
+      <div class="step-num" style="background: var(--violet);">5</div>
+      <div class="step-title">闭环 · 价值</div>
+      <div class="step-sub">深度绑定留存</div>
+    </div>
+    <div class="step-body">
+      <div class="section-label">六大价值</div>
+      <div class="value-item"><span class="vi-icon">⚡</span> <div><strong>效率</strong>自动核销，减少人工对账</div></div>
+      <div class="value-item"><span class="vi-icon">🤖</span> <div><strong>AI</strong>7×24 AI服务员在线响应</div></div>
+      <div class="value-item"><span class="vi-icon">📢</span> <div><strong>流量</strong>线上销量+榜单双提升</div></div>
+      <div class="value-item"><span class="vi-icon">👁️</span> <div><strong>曝光</strong>一键收藏打卡，提升到店转化</div></div>
+      <div class="value-item"><span class="vi-icon">🎯</span> <div><strong>营销</strong>联合会员精准触达，提升复购</div></div>
+      <div class="value-item"><span class="vi-icon">🔄</span> <div><strong>留存</strong>数据健康正向，高续约率</div></div>
+      <div class="section-label">月度必做</div>
+      <ul class="checklist">
+        <li>全品牌健康度评分更新</li>
+        <li>流失客户分析 &amp; 召回</li>
+        <li>腰部品牌升级提案</li>
+        <li>头部品牌联合营销</li>
+        <li>标杆案例包装传播</li>
+        <li>团队经验沉淀分享</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
